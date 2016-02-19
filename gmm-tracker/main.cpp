@@ -14,6 +14,8 @@
 #include <iostream>
 #include <stdio.h>
 
+#include "blob_detector.hpp"
+
 using namespace std;
 using namespace cv;
 
@@ -22,22 +24,11 @@ int main(int argc, char** argv) {
     VideoCapture cap;
     cap.open("/Users/cristopher/Workspace/gmm-tracker/gmm-tracker/videos/denmark1.avi");
     
-    Mat frame;
+    Mat frame, output;
     
-    Ptr<BackgroundSubtractorMOG2> bg = createBackgroundSubtractorMOG2();
-    
-    //bg.nmixtures = 3;
-    //bg.bShadowDetection = true;
-    //bg.nShadowDetection=127;
-    //bg.fTau=0.3;
-    
-    bg->setNMixtures(3);
-    bg->setDetectShadows(false);
-    bg->setShadowValue(127);
+    BlobDetector blobDetector;
     
     namedWindow("Video Output");
-    
-    Mat fore, back;
     
     while(1){
         cap >> frame;
@@ -45,11 +36,9 @@ int main(int argc, char** argv) {
         if (frame.empty())
             break;
         
-        bg->apply(frame, fore);
+        output = blobDetector.getFore(frame);
         
-        medianBlur(fore, fore, 3);
-        
-        imshow("Video Output", fore);
+        imshow("Video Output", output);
         
         int key = waitKey(1);
 
