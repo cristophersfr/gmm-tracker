@@ -22,7 +22,7 @@ using namespace cv;
 int main(int argc, char** argv) {
     
     VideoCapture cap;
-    cap.open("/Users/cristopher/Workspace/gmm-tracker/gmm-tracker/videos/denmark1.avi");
+    cap.open("/Users/cristopher/Workspace/gmm-tracker/gmm-tracker/videos/denmark4.avi");
     
     Mat frame, output;
     
@@ -36,7 +36,9 @@ int main(int argc, char** argv) {
         if (frame.empty())
             break;
         
-        output = blobDetector.getFore(frame);
+        blobDetector.getFore(frame);
+        blobDetector.getBLOBS();
+        output = blobDetector.drawTrackedWindows(frame);
         
         imshow("Video Output", output);
         

@@ -27,10 +27,15 @@ class BlobDetector {
 private:
     Mat fore, back;
     Ptr<BackgroundSubtractorMOG2> bgsubtractor;
+    vector<Rect> trackedWindows;
+    void checkBoxMoving();
+    void checkWindowsOverlap(Rect r0);
     
 public:
     BlobDetector();
     Mat getFore(Mat frame);
+    Mat getBLOBS();
+    Mat drawTrackedWindows(Mat frame);
     void run();
 };
 
