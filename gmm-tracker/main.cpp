@@ -36,8 +36,8 @@ int main(int argc, char** argv) {
         if (frame.empty())
             break;
         
-        blobDetector.getFore(frame);
-        blobDetector.getBLOBS();
+        output = blobDetector.getFore(frame);
+        output = blobDetector.getBLOBS();
         output = blobDetector.drawTrackedWindows(frame);
         
         imshow("Video Output", output);

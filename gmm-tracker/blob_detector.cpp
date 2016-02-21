@@ -27,8 +27,8 @@ Mat BlobDetector::getFore(Mat frame){
     medianBlur(fore, fore, 3);
     
     //Closing objects.
-    int morph_size = 3;
-    Mat element = getStructuringElement( MORPH_RECT, Size( 2*morph_size + 1, 2*morph_size+1 ), Point( morph_size, morph_size ) );
+    int morph_size = 7;
+    Mat element = getStructuringElement( MORPH_ELLIPSE, Size( 2*morph_size + 1, 2*morph_size+1 ), Point( morph_size, morph_size ) );
     morphologyEx(fore, fore, CV_MOP_CLOSE, element);
     
     //Removing shadows.
@@ -47,29 +47,34 @@ void BlobDetector::checkWindowsOverlap(Rect r0){
     while(itr!=trackedWindows.end()){
         Rect intersection = (r0 & *itr);
         if(intersection.area() > 100){
-            points.push_back(Point2f(r0.x,r0.y));
-            points.push_back(Point2f(r0.x + r0.width,r0.y + r0.height));
-            points.push_back(Point2f(itr->x,itr->y));
-            points.push_back(Point2f(itr->x + itr->width,itr->y + itr->height));
-            Rect ret = boundingRect(points);
-            points.clear();
+//            points.push_back(Point2f(r0.x,r0.y));
+//            points.push_back(Point2f(r0.x + r0.width,r0.y + r0.height));
+//            points.push_back(Point2f(itr->x,itr->y));
+//            points.push_back(Point2f(itr->x + itr->width,itr->y + itr->height));
+//            Rect ret = boundingRect(points);
+//            points.clear();
+            intersection += intersection.size();
             trackedWindows.erase(itr);
-            trackedWindows.insert(itr,ret);
+            trackedWindows.insert(itr,intersection);
         }
         itr++;
     }
 }
 
+//Getting BLOBS.
 Mat BlobDetector::getBLOBS(){
+    
+    trackedWindows = vector<Rect>();
+    
     //Labeling components.
     Mat labelImage(fore.size(), CV_32S);
     int nLabels = connectedComponents(fore, labelImage, 8);
     std::vector<Vec3b> colors(nLabels);
     colors[0] = Vec3b(0, 0, 0);//background
     
-//    for(int label = 1; label < nLabels; ++label){
-//        colors[label] = Vec3b(rand()&255,rand()&255,rand()&255);
-//    }
+    for(int label = 1; label < nLabels; ++label){
+        colors[label] = Vec3b(rand()&255,rand()&255,rand()&255);
+    }
     
     //Getting labeled points.
     Mat dst(fore.size(), CV_8UC3);
@@ -78,10 +83,12 @@ Mat BlobDetector::getBLOBS(){
         for(int c = 0; c < dst.cols; ++c){
             int label = labelImage.at<int>(r, c);
             points.push_back(Point3f(r,c,label));
-//            Vec3b &pixel = dst.at<Vec3b>(r, c);
-//            pixel = colors[label];
+            Vec3b &pixel = dst.at<Vec3b>(r, c);
+            pixel = colors[label];
         }
     }
+    
+    //cout << nLabels << endl;
     
     //Drawing bounding boxes around components.
     vector<Point3f> :: const_iterator itl = points.begin();
@@ -100,7 +107,7 @@ Mat BlobDetector::getBLOBS(){
         itl = points.begin();
         Rect r0 = boundingRect(rect_points);
         rect_points.clear();
-        if(r0.area() > 500){
+        if(r0.area() > 400 && r0.area() < 1000){
             checkWindowsOverlap(r0);
             trackedWindows.push_back(r0);
         }
@@ -110,6 +117,8 @@ Mat BlobDetector::getBLOBS(){
     
 }
 
+
+//Drawing tracked windows.
 Mat BlobDetector::drawTrackedWindows(Mat frame){
     vector<Rect> :: const_iterator itr = trackedWindows.begin();
     
