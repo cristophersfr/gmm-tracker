@@ -7,10 +7,3 @@ This tracker implements a Gaussian Mixture Model for Background Subtraction [1] 
 
 Requirements: 
   - OpenCV 3.0.0 or newer.
-
-### Todos
-
- - Add Bounding box drawing without overlapping.
- - Add region of interest.
- - Add counting.
- - Connect KFCcpp to GMM result.
