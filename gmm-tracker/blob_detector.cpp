@@ -20,6 +20,8 @@ BlobDetector::BlobDetector(){
 //Return the foreground mask.
 Mat BlobDetector::getFore(Mat frame){
     
+    this->frame = frame;
+    
     //Applying bg subtraction.
     bgsubtractor->apply(frame, fore);
     
@@ -38,24 +40,38 @@ Mat BlobDetector::getFore(Mat frame){
     
 }
 
-//Check if some window overlap.
-void BlobDetector::checkWindowsOverlap(Rect r0){
-    
-    vector<Rect> :: const_iterator itr = trackedWindows.begin();
+//Check if box is moving.
+bool BlobDetector::checkBoxMoving(vector<Rect> * windows, Rect r0){
+    vector<Rect> :: const_iterator itr = windows->begin();
     vector<Point2f> points;
     
-    while(itr!=trackedWindows.end()){
+    while(itr!=windows->end()){
+        Rect intersection = (r0 & *itr);
+        if(intersection.area() > 0){
+            //Remove the previous box.
+            windows->erase(itr);
+            //Insert the most recent box.
+            windows->insert(itr,r0);
+            return true;
+        }
+        itr++;
+    }
+    
+    return false;
+}
+
+//Check if some window overlap.
+void BlobDetector::checkWindowsOverlap(vector<Rect> * windows, Rect r0){
+    
+    vector<Rect> :: const_iterator itr = windows->begin();
+    vector<Point2f> points;
+    
+    while(itr!=windows->end()){
         Rect intersection = (r0 & *itr);
         if(intersection.area() > 100){
-//            points.push_back(Point2f(r0.x,r0.y));
-//            points.push_back(Point2f(r0.x + r0.width,r0.y + r0.height));
-//            points.push_back(Point2f(itr->x,itr->y));
-//            points.push_back(Point2f(itr->x + itr->width,itr->y + itr->height));
-//            Rect ret = boundingRect(points);
-//            points.clear();
             intersection += intersection.size();
-            trackedWindows.erase(itr);
-            trackedWindows.insert(itr,intersection);
+            windows->erase(itr);
+            windows->insert(itr,intersection);
         }
         itr++;
     }
@@ -108,7 +124,7 @@ Mat BlobDetector::getBLOBS(){
         Rect r0 = boundingRect(rect_points);
         rect_points.clear();
         if(r0.area() > 400 && r0.area() < 1000){
-            checkWindowsOverlap(r0);
+            checkWindowsOverlap(&trackedWindows, r0);
             trackedWindows.push_back(r0);
         }
     }
@@ -117,9 +133,33 @@ Mat BlobDetector::getBLOBS(){
     
 }
 
+//Get moving object using ROI.
+vector<Rect> BlobDetector::getMovingObjects(){
+    Rect detectionROI = Rect(240,100,5,120);
+    rectangle(frame, detectionROI, Scalar(0, 0, 255));
+    
+    vector<Rect> :: const_iterator itr = trackedWindows.begin();
+    
+    while(itr!=trackedWindows.end()){
+        Rect intersection = (detectionROI & *itr);
+        if(intersection.area() > 0){
+            if(itr->area() > 400 && itr->area() < 1000){
+                bool result = checkBoxMoving(&detectedWindows, *itr);
+                if(!result){
+                    detectedWindows.push_back(*itr);
+                }
+            }
+        }
+        itr++;
+    }
+    
+    
+    return detectedWindows;
+}
+
 
 //Drawing tracked windows.
-Mat BlobDetector::drawTrackedWindows(Mat frame){
+Mat BlobDetector::drawTrackedWindows(){
     vector<Rect> :: const_iterator itr = trackedWindows.begin();
     
     while(itr!=trackedWindows.end()){
@@ -131,6 +171,21 @@ Mat BlobDetector::drawTrackedWindows(Mat frame){
     
     return frame;
 }
+
+//Drawing detected windows.
+Mat BlobDetector::drawDetectedWindows(){
+    vector<Rect> :: const_iterator itr = detectedWindows.begin();
+    
+    while(itr!=detectedWindows.end()){
+        rectangle(frame, *itr, Scalar(0, 0, 255));
+        Point2f center = Point2f((*itr).x + (*itr).width/2,  (*itr).y+ (*itr).height/2);
+        circle(frame, center, 1, Scalar(0, 0, 255), 2, 8, 0);
+        itr++;
+    }
+    
+    return frame;
+}
+
 
 void BlobDetector::run(){
     

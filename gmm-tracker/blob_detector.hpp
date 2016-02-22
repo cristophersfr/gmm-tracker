@@ -25,17 +25,21 @@ using namespace cv;
 class BlobDetector {
 
 private:
+    Mat frame;
     Mat fore, back;
     Ptr<BackgroundSubtractorMOG2> bgsubtractor;
     vector<Rect> trackedWindows;
-    void checkBoxMoving();
-    void checkWindowsOverlap(Rect r0);
+    vector<Rect> detectedWindows;
+    bool checkBoxMoving(vector<Rect> * windows, Rect r0);
+    void checkWindowsOverlap(vector<Rect> * windows, Rect r0);
     
 public:
     BlobDetector();
     Mat getFore(Mat frame);
     Mat getBLOBS();
-    Mat drawTrackedWindows(Mat frame);
+    vector<Rect> getMovingObjects();
+    Mat drawTrackedWindows();
+    Mat drawDetectedWindows();
     void run();
 };
 
