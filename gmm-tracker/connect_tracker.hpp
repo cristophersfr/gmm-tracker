@@ -1,13 +1,13 @@
 //
-//  connectTracker.hpp
+//  connect_tracker.hpp
 //  gmm-tracker
 //
 //  Created by Cristopher Freitas on 2/21/16.
 //  Copyright © 2016 Cristopher Freitas. All rights reserved.
 //
 
-#ifndef connectTracker_hpp
-#define connectTracker_hpp
+#ifndef connect_tracker_hpp
+#define connect_tracker_hpp
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgcodecs.hpp>
