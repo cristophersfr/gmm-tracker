@@ -27,7 +27,7 @@ vector<Rect> resultsWindows;
 
 int nResults;
 
-static Mat frame;
+Mat frame;
 
 sem_t * frameLock;
 
@@ -59,13 +59,12 @@ vector<Rect> checkTrackingWindows(vector <Rect> windows){
 
 //Thread function responsible for keep updating the tracker.
 void runTracker(KCFTracker * tracker){
-    Rect result;
-    resultsWindows.push_back(result);
-    nResults++;
     while(!frame.empty()){
         sem_wait(frameLock);
+        Rect result;
+        resultsWindows.push_back(result);
+        nResults++;
         result = tracker->update(frame);
-        //May happen a concurrency here.
         resultsWindows[nResults] = result;
         rectangle( frame, Point( result.x, result.y ), Point( result.x+result.width, result.y+result.height), Scalar( 0, 255, 255 ), 1, 8 );
         sem_post(frameLock);
@@ -78,11 +77,11 @@ void trackObjects(vector<Rect> objects){
     int i = 0;
     while(itr!=objects.end()){
         KCFTracker * tracker = new KCFTracker();
-        cout << &itr << endl;
-        cout << "creating thread" << endl;
+        sem_wait(frameLock);
         tracker->init(*itr, frame);
         threads.push_back(thread (runTracker, tracker));
         threads[i].detach();
+        sem_post(frameLock);
         i++;
         itr++;
     }
@@ -91,6 +90,7 @@ void trackObjects(vector<Rect> objects){
 int main(int argc, char** argv) {
     
     sem_unlink("frameSync");
+    //Have to change this is not in OS X.
     frameLock = sem_open("frameSync", O_CREAT, 0700, 1);
     
     VideoCapture cap;
@@ -100,6 +100,7 @@ int main(int argc, char** argv) {
     BlobDetector blobDetector;
     vector<Rect> objectsWindows;
     bool init = false;
+    
     namedWindow("Video Output");
     
     int nFrames = 0;
@@ -108,7 +109,7 @@ int main(int argc, char** argv) {
     while(1){
         
         sem_wait(frameLock);
-        cap >> frame;
+        cap.read(frame);
         sem_post(frameLock);
         
         if (frame.empty())
@@ -117,15 +118,16 @@ int main(int argc, char** argv) {
         blobDetector.getFore(frame);
         blobDetector.getBLOBS();
         objectsWindows = blobDetector.getMovingObjects();
-        output = blobDetector.drawTrackedWindows();
+        //output = blobDetector.drawTrackedWindows();
         output = blobDetector.drawDetectedWindows();
         
-        if(objectsWindows.size() > 1 && !init){
+        if(objectsWindows.size() > 0 && !init){
             cout << objectsWindows.size();
             trackObjects(objectsWindows);
             init = true;
         }
-        else if(init && (nFrames%10 == 0)){
+        else if(init){
+            //cout << "entrou aqui" << endl;
             objectsWindows =  checkTrackingWindows(objectsWindows);
             if(objectsWindows.size() > 0){
                 cout << "entrou aqui" << endl;
@@ -142,5 +144,13 @@ int main(int argc, char** argv) {
         if ( key == 27 ) break;
         
     }
+    
+    for(int i = 0; i < threads.size(); i++){
+        if(threads[i].joinable()){
+            threads[i].join();
+        }
+    }
+    
+    cap.release();
 
 }

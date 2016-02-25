@@ -4,3 +4,4 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake-mod
 find_package( OpenCV REQUIRED )
 add_executable( GMMTracker main.cpp blob_detector.cpp connect_tracker.cpp kcftracker/fhog.cpp kcftracker/kcftracker.cpp )
 target_link_libraries( GMMTracker ${OpenCV_LIBS} )
+target_compile_features(GMMTracker PRIVATE cxx_range_for)
