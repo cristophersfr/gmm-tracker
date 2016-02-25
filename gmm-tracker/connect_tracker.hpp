@@ -28,7 +28,8 @@ class connectTracker {
     
 public:
     connectTracker();
-    void run(vector<Rect> objectsWindows);
+    void init(vector<Rect> objectsWindows, Mat frame);
+    Mat update(Mat frame);
 };
 
 #endif /* connectTracker_hpp */

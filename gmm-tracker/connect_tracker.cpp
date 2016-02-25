@@ -8,10 +8,11 @@
 
 #include "connect_tracker.hpp"
 
-void connectTracker::run(vector<Rect> objectsWindows){
+void connectTracker::init(vector<Rect> objectsWindows, Mat frame){
     vector<Rect> :: const_iterator itr = objectsWindows.begin();
     while(itr!=objectsWindows.end()){
-        KCFTracker kcft;
-        //kcft.init(<#const cv::Rect &roi#>, <#cv::Mat image#>)
+        KCFTracker * tracker;
+        tracker->init(*itr, frame);
+        trackers.push_back(*tracker);
     }
 }
