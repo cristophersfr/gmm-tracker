@@ -15,6 +15,7 @@
 #include <thread>
 #include <stdio.h>
 #include <semaphore.h>
+#include <time.h>
 
 #include "blob_detector.hpp"
 #include "kcftracker/kcftracker.hpp"
@@ -26,7 +27,7 @@ vector<thread> threads;
 
 vector<Rect> resultsWindows;
 
-int nResults;
+int num_results;
 
 sem_t * frameLock;
 
@@ -78,8 +79,8 @@ vector<Rect> checkTrackingWindows(vector <Rect> windows){
 //Thread function responsible for keep updating the tracker.
 void runTracker(KCFTracker * tracker, Mat * frame){
     Rect * result = new Rect();
-    int i = nResults;
-    nResults++;
+    int i = num_results;
+    num_results++;
     resultsWindows.push_back(*result);
 //    cout << resultsWindows.front() << endl;
     while(!frame->empty()){
@@ -118,7 +119,7 @@ int main(int argc, char** argv) {
     frameLock = sem_open("frameSync", O_CREAT, 0700, 1);
     
     VideoCapture cap;
-    cap.open("/Users/cristopher/Workspace/gmm-tracker/gmm-tracker/videos/denmark4.avi");
+    cap.open("/Users/cristopher/Workspace/gmm-tracker/gmm-tracker/videos/sample.avi");
     
     Mat output;
     BlobDetector blobDetector;
@@ -127,8 +128,14 @@ int main(int argc, char** argv) {
     
     namedWindow("Video Output");
     
-    int nFrames = 0;
-    nResults = 0;
+    int num_frames = 0;
+    num_results = 0;
+    
+    // Start and end times
+    time_t start, end;
+    
+    // Start time
+    time(&start);
     
     while(1){
         
@@ -142,7 +149,7 @@ int main(int argc, char** argv) {
         blobDetector.getFore(frame);
         blobDetector.getBLOBS();
         objectsWindows = blobDetector.getMovingObjects();
-        //output = blobDetector.drawTrackedWindows();
+        output = blobDetector.drawTrackedWindows();
         output = blobDetector.drawDetectedWindows(objectsWindows);
         
         if(objectsWindows.size() > 0 && !init){
@@ -157,8 +164,24 @@ int main(int argc, char** argv) {
             }
         }
         
-        nFrames++;
-                  
+        num_frames++;
+        
+        // End Time
+        time(&end);
+        
+        // Time elapsed
+        double seconds = difftime (end, start);
+        //cout << "Time taken : " << seconds << " seconds" << endl;
+        
+        // Calculate frames per second
+        double fps  = num_frames / seconds;
+        
+        string text = "FPS: " + to_string(int(round(fps)));
+        
+        putText(output, text, Point(10,15), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0,255,255),2,8);
+        
+        putText(output, to_string(threads.size()), Point(10,35), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0,255,255),2,8);
+        
         imshow("Video Output", output);
         
         int key = waitKey(1);
