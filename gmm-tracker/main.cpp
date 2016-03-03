@@ -143,7 +143,7 @@ int main(int argc, char** argv) {
         blobDetector.getBLOBS();
         objectsWindows = blobDetector.getMovingObjects();
         //output = blobDetector.drawTrackedWindows();
-        output = blobDetector.drawDetectedWindows();
+        output = blobDetector.drawDetectedWindows(objectsWindows);
         
         if(objectsWindows.size() > 0 && !init){
             //cout << objectsWindows.size();

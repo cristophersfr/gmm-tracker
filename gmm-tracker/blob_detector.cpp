@@ -134,6 +134,8 @@ Mat BlobDetector::getBLOBS(){
 
 //Get moving object using ROI.
 vector<Rect> BlobDetector::getMovingObjects(){
+    vector<Rect> detectedWindows;
+    
     Rect detectionROI = Rect(240,100,5,120);
     rectangle(frame, detectionROI, Scalar(0, 0, 255));
     
@@ -143,10 +145,10 @@ vector<Rect> BlobDetector::getMovingObjects(){
         Rect intersection = (detectionROI & *itr);
         if(intersection.area() > 0){
             if(itr->area() > 400 && itr->area() < 1000){
-                bool result = checkBoxMoving(&detectedWindows, *itr);
-                if(!result){
+                //bool result = checkBoxMoving(&detectedWindows, *itr);
+                //if(!result){
                     detectedWindows.push_back(*itr);
-                }
+                //}
             }
         }
         itr++;
@@ -172,7 +174,7 @@ Mat BlobDetector::drawTrackedWindows(){
 }
 
 //Drawing detected windows.
-Mat BlobDetector::drawDetectedWindows(){
+Mat BlobDetector::drawDetectedWindows(vector<Rect> detectedWindows){
     vector<Rect> :: const_iterator itr = detectedWindows.begin();
     
     while(itr!=detectedWindows.end()){

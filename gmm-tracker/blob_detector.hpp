@@ -29,7 +29,6 @@ private:
     Mat fore, back;
     Ptr<BackgroundSubtractorMOG2> bgsubtractor;
     vector<Rect> trackedWindows;
-    vector<Rect> detectedWindows;
     bool checkBoxMoving(vector<Rect> * windows, Rect r0);
     void checkWindowsOverlap(vector<Rect> * windows, Rect r0);
     
@@ -39,7 +38,7 @@ public:
     Mat getBLOBS();
     vector<Rect> getMovingObjects();
     Mat drawTrackedWindows();
-    Mat drawDetectedWindows();
+    Mat drawDetectedWindows(vector<Rect> detectedWindows);
     void run();
 };
 
