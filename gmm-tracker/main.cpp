@@ -23,11 +23,10 @@ using namespace std;
 using namespace cv;
 
 vector<thread> threads;
+
 vector<Rect> resultsWindows;
 
 int nResults;
-
-Mat frame;
 
 sem_t * frameLock;
 
@@ -37,50 +36,73 @@ vector<Rect> checkTrackingWindows(vector <Rect> windows){
     vector<Rect> :: const_iterator itr = resultsWindows.begin();
     vector<Rect> results;
     
-    while(itw!=windows.end()){
-        while(itr!= resultsWindows.end()){
+    cout << resultsWindows.size() << endl;
+    
+    bool overlap_flag = false;
+    
+    while(itw != windows.end()){
+        while(itr != resultsWindows.end()){
             Rect intersection = (*itr & *itw);
             int rect_area = (*itr).area();
-            if(rect_area > 0){
-                int ratio = intersection.area() / rect_area ;
+            
+            if(intersection.area() > 0){
+                float ratio = intersection.area() / float(rect_area) ;
                 ratio = ratio * 100;
+                //cout << ratio << endl;
                 //Ratio of overlapping.
-                if(ratio < 40){
-                    results.push_back(*itw);
+                if(ratio < 10){
+                    overlap_flag = false;
+                } else {
+                    overlap_flag = true;
+                    break;
                 }
+            } else {
+                overlap_flag = false;
             }
+            
             itr++;
         }
+        
+        if(!overlap_flag){
+            results.push_back(*itw);
+        }
+        
         itw++;
+        
+        itr = resultsWindows.begin();
     }
     
     return results;
 }
 
 //Thread function responsible for keep updating the tracker.
-void runTracker(KCFTracker * tracker){
-    while(!frame.empty()){
+void runTracker(KCFTracker * tracker, Mat * frame){
+    Rect * result = new Rect();
+    int i = nResults;
+    nResults++;
+    resultsWindows.push_back(*result);
+//    cout << resultsWindows.front() << endl;
+    while(!frame->empty()){
         sem_wait(frameLock);
-        Rect result;
-        resultsWindows.push_back(result);
-        nResults++;
-        result = tracker->update(frame);
-        resultsWindows[nResults] = result;
-        rectangle( frame, Point( result.x, result.y ), Point( result.x+result.width, result.y+result.height), Scalar( 0, 255, 255 ), 1, 8 );
+        *result = tracker->update(*frame);
+        resultsWindows[i] = *result;
+        rectangle( *frame, Point( result->x, result->y ),
+                  Point( result->x+result->width, result->y+result->height),
+                  Scalar( 0, 255, 255 ), 1, 8 );
         sem_post(frameLock);
     }
 }
 
 //Starting tracking and creating the thread responsible.
-void trackObjects(vector<Rect> objects){
+void trackObjects(vector<Rect> objects, Mat * frame){
     vector<Rect> :: const_iterator itr = objects.begin();
     int i = 0;
     while(itr!=objects.end()){
         KCFTracker * tracker = new KCFTracker();
         sem_wait(frameLock);
-        tracker->init(*itr, frame);
-        threads.push_back(thread (runTracker, tracker));
-        threads[i].detach();
+        tracker->init(*itr, *frame);
+        threads.push_back(thread (runTracker, tracker, frame));
+//        threads[i].detach();
         sem_post(frameLock);
         i++;
         itr++;
@@ -89,8 +111,10 @@ void trackObjects(vector<Rect> objects){
 
 int main(int argc, char** argv) {
     
+    Mat frame;
+    
     sem_unlink("frameSync");
-    //Have to change this is not in OS X.
+    //Have to change this if is not in OS X.
     frameLock = sem_open("frameSync", O_CREAT, 0700, 1);
     
     VideoCapture cap;
@@ -122,16 +146,14 @@ int main(int argc, char** argv) {
         output = blobDetector.drawDetectedWindows();
         
         if(objectsWindows.size() > 0 && !init){
-            cout << objectsWindows.size();
-            trackObjects(objectsWindows);
+            //cout << objectsWindows.size();
+            trackObjects(objectsWindows, &frame);
             init = true;
         }
         else if(init){
-            //cout << "entrou aqui" << endl;
-            objectsWindows =  checkTrackingWindows(objectsWindows);
+            objectsWindows = checkTrackingWindows(objectsWindows);
             if(objectsWindows.size() > 0){
-                cout << "entrou aqui" << endl;
-                trackObjects(objectsWindows);
+                trackObjects(objectsWindows, &frame);
             }
         }
         

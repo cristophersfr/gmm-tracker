@@ -51,7 +51,7 @@ bool BlobDetector::checkBoxMoving(vector<Rect> * windows, Rect r0){
             //Remove the previous box.
             windows->erase(itr);
             //Insert the most recent box.
-            windows->insert(itr,r0);
+            windows->push_back(r0);
             return true;
         }
         itr++;
@@ -64,13 +64,12 @@ bool BlobDetector::checkBoxMoving(vector<Rect> * windows, Rect r0){
 void BlobDetector::checkWindowsOverlap(vector<Rect> * windows, Rect r0){
     
     vector<Rect> :: const_iterator itr = windows->begin();
-    vector<Point2f> points;
     
     while(itr!=windows->end()){
         Rect intersection = (r0 & *itr);
         if(intersection.area() > 100){
             intersection += intersection.size();
-            windows->erase(itr);
+            //windows->erase(itr);
             windows->insert(itr,intersection);
         }
         itr++;
