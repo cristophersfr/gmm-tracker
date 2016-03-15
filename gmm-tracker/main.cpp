@@ -37,7 +37,7 @@ vector<Rect> checkTrackingWindows(vector <Rect> windows){
     vector<Rect> :: const_iterator itr = resultsWindows.begin();
     vector<Rect> results;
     
-    cout << resultsWindows.size() << endl;
+    //cout << resultsWindows.size() << endl;
     
     bool overlap_flag = false;
     
@@ -103,7 +103,7 @@ void trackObjects(vector<Rect> objects, Mat * frame){
         sem_wait(frameLock);
         tracker->init(*itr, *frame);
         threads.push_back(thread (runTracker, tracker, frame));
-//        threads[i].detach();
+        //threads[i].detach();
         sem_post(frameLock);
         i++;
         itr++;
@@ -115,11 +115,10 @@ int main(int argc, char** argv) {
     Mat frame;
     
     sem_unlink("frameSync");
-    //Have to change this if is not in OS X.
     frameLock = sem_open("frameSync", O_CREAT, 0700, 1);
-    
+
     VideoCapture cap;
-    cap.open("/Users/cristopher/Workspace/gmm-tracker/gmm-tracker/videos/sample.avi");
+    cap.open("/Users/cristopher/Workspace/gmm-tracker/gmm-tracker/videos/denmark.mkv");
     
     Mat output;
     BlobDetector blobDetector;
@@ -139,6 +138,7 @@ int main(int argc, char** argv) {
     
     while(1){
         
+        //Synchronize frame capture.
         sem_wait(frameLock);
         cap.read(frame);
         sem_post(frameLock);
@@ -146,24 +146,41 @@ int main(int argc, char** argv) {
         if (frame.empty())
             break;
         
-        blobDetector.getFore(frame);
-        blobDetector.getBLOBS();
-        objectsWindows = blobDetector.getMovingObjects();
-        output = blobDetector.drawTrackedWindows();
-        output = blobDetector.drawDetectedWindows(objectsWindows);
+        output = frame;
         
-        if(objectsWindows.size() > 0 && !init){
-            //cout << objectsWindows.size();
-            trackObjects(objectsWindows, &frame);
-            init = true;
-        }
-        else if(init){
-            objectsWindows = checkTrackingWindows(objectsWindows);
-            if(objectsWindows.size() > 0){
+        //Get foreground.
+        Mat fore = blobDetector.getFore(frame);
+        
+        //Training period.
+        if(num_frames > 400){
+        
+            //Get BLOBS.
+            //Very expensive operation.
+            output = blobDetector.getBLOBS();
+            
+            //Detect objects through intersection.
+            objectsWindows = blobDetector.getMovingObjects();
+            
+            //Drawing output.
+            output = blobDetector.drawTrackedWindows();
+            output = blobDetector.drawDetectedWindows(objectsWindows);
+            
+            //Call KCFTracker.
+            if(objectsWindows.size() > 0 && !init){
+                //cout << objectsWindows.size();
                 trackObjects(objectsWindows, &frame);
+                init = true;
             }
+            else if(init){
+                objectsWindows = checkTrackingWindows(objectsWindows);
+                if(objectsWindows.size() > 0){
+                    trackObjects(objectsWindows, &frame);
+                }
+            }
+            
         }
         
+        //Counting frames.
         num_frames++;
         
         // End Time
@@ -178,11 +195,12 @@ int main(int argc, char** argv) {
         
         string text = "FPS: " + to_string(int(round(fps)));
         
-        putText(output, text, Point(10,15), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0,255,255),2,8);
+        putText(output, text, Point(10,15), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0,0,255),2,8);
         
-        putText(output, to_string(threads.size()), Point(10,35), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0,255,255),2,8);
+        putText(output, to_string(threads.size()), Point(10,35), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0,0,255),2,8);
         
         imshow("Video Output", output);
+        //imshow("Foreground", fore);
         
         int key = waitKey(1);
 

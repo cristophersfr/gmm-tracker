@@ -21,21 +21,23 @@ BlobDetector::BlobDetector(){
 Mat BlobDetector::getFore(Mat frame){
     
     this->frame = frame;
+
+//    GaussianBlur(this->frame, this->frame, Size(3,3), 0);
     
     //Applying bg subtraction.
-    bgsubtractor->apply(frame, fore);
+    bgsubtractor->apply(this->frame, fore);
     
     //Removing noise from foreground.
     medianBlur(fore, fore, 3);
-    
+
     //Closing objects.
-    int morph_size = 7;
+    int morph_size = 5;
     Mat element = getStructuringElement( MORPH_ELLIPSE, Size( 2*morph_size + 1, 2*morph_size+1 ), Point( morph_size, morph_size ) );
     morphologyEx(fore, fore, CV_MOP_CLOSE, element);
-    
+
     //Removing shadows.
     threshold(fore, fore, 200, 255, THRESH_BINARY);
-    
+
     return fore;
     
 }
@@ -69,7 +71,7 @@ void BlobDetector::checkWindowsOverlap(vector<Rect> * windows, Rect r0){
         Rect intersection = (r0 & *itr);
         if(intersection.area() > 100){
             intersection += intersection.size();
-            //windows->erase(itr);
+            windows->erase(itr);
             windows->insert(itr,intersection);
         }
         itr++;
@@ -94,6 +96,7 @@ Mat BlobDetector::getBLOBS(){
     //Getting labeled points.
     Mat dst(fore.size(), CV_8UC3);
     vector<Point3f> points;
+    
     for(int r = 0; r < dst.rows; ++r){
         for(int c = 0; c < dst.cols; ++c){
             int label = labelImage.at<int>(r, c);
@@ -122,7 +125,7 @@ Mat BlobDetector::getBLOBS(){
         itl = points.begin();
         Rect r0 = boundingRect(rect_points);
         rect_points.clear();
-        if(r0.area() > 400 && r0.area() < 1000){
+        if(r0.area() > 200 && r0.area() < 1200){
             checkWindowsOverlap(&trackedWindows, r0);
             trackedWindows.push_back(r0);
         }
@@ -134,9 +137,19 @@ Mat BlobDetector::getBLOBS(){
 
 //Get moving object using ROI.
 vector<Rect> BlobDetector::getMovingObjects(){
+    
     vector<Rect> detectedWindows;
     
-    Rect detectionROI = Rect(240,100,5,120);
+    //denmark4.avi ROI.
+    //Rect detectionROI = Rect(240,100,5,120);
+    
+    //denmark1.avi ROI.
+    //Rect detectionROI = Rect(200,160,5,50);
+    Rect detectionROI = Rect(260,200,50,5);
+    
+    //nevada1.avi ROI.
+    //Rect detectionROI = Rect(200,160,60,120);
+    
     rectangle(frame, detectionROI, Scalar(0, 0, 255));
     
     vector<Rect> :: const_iterator itr = trackedWindows.begin();
@@ -144,7 +157,10 @@ vector<Rect> BlobDetector::getMovingObjects(){
     while(itr!=trackedWindows.end()){
         Rect intersection = (detectionROI & *itr);
         if(intersection.area() > 0){
-            if(itr->area() > 400 && itr->area() < 1000){
+            float ratio = intersection.area() / float((*itr).area()) ;
+            ratio = ratio * 100;
+            
+            if(ratio > 10){
                 //bool result = checkBoxMoving(&detectedWindows, *itr);
                 //if(!result){
                     detectedWindows.push_back(*itr);
