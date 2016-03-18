@@ -118,7 +118,7 @@ int main(int argc, char** argv) {
     frameLock = sem_open("frameSync", O_CREAT, 0700, 1);
 
     VideoCapture cap;
-    cap.open("/Users/cristopher/Workspace/gmm-tracker/gmm-tracker/videos/denmark.mkv");
+    cap.open("/Users/cristopher/Workspace/gmm-tracker/gmm-tracker/videos/denmark4.avi");
     
     Mat output;
     BlobDetector blobDetector;
@@ -146,39 +146,33 @@ int main(int argc, char** argv) {
         if (frame.empty())
             break;
         
-        output = frame;
-        
         //Get foreground.
         Mat fore = blobDetector.getFore(frame);
         
-        //Training period.
-        if(num_frames > 400){
+        //Get BLOBS.
+        //Very expensive operation.
+        output = blobDetector.getBLOBS();
         
-            //Get BLOBS.
-            //Very expensive operation.
-            output = blobDetector.getBLOBS();
-            
-            //Detect objects through intersection.
-            objectsWindows = blobDetector.getMovingObjects();
-            
-            //Drawing output.
-            output = blobDetector.drawTrackedWindows();
-            output = blobDetector.drawDetectedWindows(objectsWindows);
-            
-            //Call KCFTracker.
-            if(objectsWindows.size() > 0 && !init){
-                //cout << objectsWindows.size();
-                trackObjects(objectsWindows, &frame);
-                init = true;
-            }
-            else if(init){
-                objectsWindows = checkTrackingWindows(objectsWindows);
-                if(objectsWindows.size() > 0){
-                    trackObjects(objectsWindows, &frame);
-                }
-            }
-            
+        //Detect objects through intersection.
+        objectsWindows = blobDetector.getMovingObjects();
+        
+        //Drawing output.
+        output = blobDetector.drawTrackedWindows();
+        output = blobDetector.drawDetectedWindows(objectsWindows);
+        
+        //Call KCFTracker.
+        if(objectsWindows.size() > 0 && !init){
+            //cout << objectsWindows.size();
+            trackObjects(objectsWindows, &frame);
+            init = true;
         }
+        else if(init){
+            objectsWindows = checkTrackingWindows(objectsWindows);
+            if(objectsWindows.size() > 0){
+                trackObjects(objectsWindows, &frame);
+            }
+        }
+        
         
         //Counting frames.
         num_frames++;
@@ -192,15 +186,13 @@ int main(int argc, char** argv) {
         
         // Calculate frames per second
         double fps  = num_frames / seconds;
-        
         string text = "FPS: " + to_string(int(round(fps)));
-        
         putText(output, text, Point(10,15), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0,0,255),2,8);
-        
         putText(output, to_string(threads.size()), Point(10,35), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0,0,255),2,8);
         
+        // Display images.
         imshow("Video Output", output);
-        //imshow("Foreground", fore);
+        imshow("Foreground", fore);
         
         int key = waitKey(1);
 

@@ -11,8 +11,8 @@
 //Instant the Background Subtractor and its parameters.
 BlobDetector::BlobDetector(){
     bgsubtractor = createBackgroundSubtractorMOG2();
-//    bgsubtractor->setHistory(120);
-    bgsubtractor->setNMixtures(3);
+    bgsubtractor->setHistory(12000);
+    bgsubtractor->setNMixtures(5);
     bgsubtractor->setDetectShadows(true);
     bgsubtractor->setShadowValue(127);
 }
@@ -21,8 +21,6 @@ BlobDetector::BlobDetector(){
 Mat BlobDetector::getFore(Mat frame){
     
     this->frame = frame;
-
-//    GaussianBlur(this->frame, this->frame, Size(3,3), 0);
     
     //Applying bg subtraction.
     bgsubtractor->apply(this->frame, fore);
@@ -69,11 +67,15 @@ void BlobDetector::checkWindowsOverlap(vector<Rect> * windows, Rect r0){
     
     while(itr!=windows->end()){
         Rect intersection = (r0 & *itr);
-        if(intersection.area() > 100){
+        float ratio = intersection.area() / float((*itr).area()) ;
+        ratio = ratio * 100;
+        
+        if(ratio > 30){
             intersection += intersection.size();
             windows->erase(itr);
             windows->insert(itr,intersection);
         }
+        
         itr++;
     }
 }
@@ -125,7 +127,7 @@ Mat BlobDetector::getBLOBS(){
         itl = points.begin();
         Rect r0 = boundingRect(rect_points);
         rect_points.clear();
-        if(r0.area() > 200 && r0.area() < 1200){
+        if(r0.area() > 200 /*&& r0.area() < 1200*/){
             checkWindowsOverlap(&trackedWindows, r0);
             trackedWindows.push_back(r0);
         }
@@ -141,11 +143,11 @@ vector<Rect> BlobDetector::getMovingObjects(){
     vector<Rect> detectedWindows;
     
     //denmark4.avi ROI.
-    //Rect detectionROI = Rect(240,100,5,120);
+    Rect detectionROI = Rect(240,100,5,120);
     
     //denmark1.avi ROI.
     //Rect detectionROI = Rect(200,160,5,50);
-    Rect detectionROI = Rect(260,200,50,5);
+    //Rect detectionROI = Rect(260,200,50,5);
     
     //nevada1.avi ROI.
     //Rect detectionROI = Rect(200,160,60,120);
