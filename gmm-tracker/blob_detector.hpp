@@ -17,6 +17,9 @@
 #include <opencv2/highgui/highgui.hpp>
 
 #include <iostream>
+#include <vector>
+#include <map>
+
 #include <stdio.h>
 
 using namespace std;
@@ -35,7 +38,9 @@ private:
 public:
     BlobDetector();
     Mat getFore(Mat frame);
+    [[deprecated("Replaced by detectBLOBS, which has an improved implementation.")]]
     Mat getBLOBS();
+    Mat detectBLOBS();
     vector<Rect> getMovingObjects();
     Mat drawTrackedWindows();
     Mat drawDetectedWindows(vector<Rect> detectedWindows);

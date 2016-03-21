@@ -80,7 +80,140 @@ void BlobDetector::checkWindowsOverlap(vector<Rect> * windows, Rect r0){
     }
 }
 
-//Getting BLOBS.
+// Using SimpleBlobDetector to get blobs.
+Mat BlobDetector::detectBLOBS(){
+    
+    trackedWindows = vector<Rect>();
+    
+    SimpleBlobDetector::Params pDefaultBLOB;
+    // This is default parameters for SimpleBlobDetector
+    pDefaultBLOB.thresholdStep = 10;
+    pDefaultBLOB.minThreshold = 10;
+    pDefaultBLOB.maxThreshold = 220;
+    pDefaultBLOB.minRepeatability = 2;
+    pDefaultBLOB.minDistBetweenBlobs = 10;
+    pDefaultBLOB.filterByColor = false;
+    pDefaultBLOB.blobColor = 0;
+    pDefaultBLOB.filterByArea = false;
+    pDefaultBLOB.minArea = 25;
+    pDefaultBLOB.maxArea = 5000;
+    pDefaultBLOB.filterByCircularity = false;
+    pDefaultBLOB.minCircularity = 0.9f;
+    pDefaultBLOB.maxCircularity = (float)1e37;
+    pDefaultBLOB.filterByInertia = false;
+    pDefaultBLOB.minInertiaRatio = 0.1f;
+    pDefaultBLOB.maxInertiaRatio = (float)1e37;
+    pDefaultBLOB.filterByConvexity = false;
+    pDefaultBLOB.minConvexity = 0.95f;
+    pDefaultBLOB.maxConvexity = (float)1e37;
+    // Descriptor array for BLOB
+    vector<String> typeDesc;
+    // Param array for BLOB
+    vector<SimpleBlobDetector::Params> pBLOB;
+    vector<SimpleBlobDetector::Params>::iterator itBLOB;
+    
+    // Color palette
+    vector< Vec3b >  palette;
+    for (int i = 0; i<65536; i++)
+    {
+        palette.push_back(Vec3b((uchar)rand(), (uchar)rand(), (uchar)rand()));
+    }
+    
+    // This descriptor are going to be detect and compute BLOBS with 6 differents params
+    // Param for first BLOB detector we want all
+    typeDesc.push_back("BLOB");    // see http://docs.opencv.org/trunk/d0/d7a/classcv_1_1SimpleBlobDetector.html
+    pBLOB.push_back(pDefaultBLOB);
+    pBLOB.back().filterByArea = true;
+    pBLOB.back().minArea = 1;
+    pBLOB.back().maxArea = float(fore.rows*fore.cols);
+    // Param for second BLOB detector we want area between 500 and 2900 pixels
+    typeDesc.push_back("BLOB");
+    pBLOB.push_back(pDefaultBLOB);
+    pBLOB.back().filterByArea = true;
+    pBLOB.back().minArea = 500;
+    pBLOB.back().maxArea = 2900;
+    // Param for third BLOB detector we want only circular object
+    typeDesc.push_back("BLOB");
+    pBLOB.push_back(pDefaultBLOB);
+    pBLOB.back().filterByCircularity = true;
+    // Param for Fourth BLOB detector we want ratio inertia
+    typeDesc.push_back("BLOB");
+    pBLOB.push_back(pDefaultBLOB);
+    pBLOB.back().filterByInertia = true;
+    pBLOB.back().minInertiaRatio = 0;
+    pBLOB.back().maxInertiaRatio = (float)0.2;
+    // Param for fifth BLOB detector we want ratio inertia
+    typeDesc.push_back("BLOB");
+    pBLOB.push_back(pDefaultBLOB);
+    pBLOB.back().filterByConvexity = true;
+    pBLOB.back().minConvexity = 0.;
+    pBLOB.back().maxConvexity = (float)0.9;
+    // Param for six BLOB detector we want blob with gravity center color equal to 0 bug #4321 must be fixed
+    typeDesc.push_back("BLOB");
+    pBLOB.push_back(pDefaultBLOB);
+    pBLOB.back().filterByColor = true;
+    pBLOB.back().blobColor = 0;
+    
+    itBLOB = pBLOB.begin();
+    vector<double> desMethCmp;
+    Ptr<Feature2D> b;
+    String label;
+    // Descriptor loop
+    vector<String>::iterator itDesc;
+    for (itDesc = typeDesc.begin(); itDesc != typeDesc.end(); itDesc++)
+    {
+        vector<KeyPoint> keyImg1;
+        if (*itDesc == "BLOB")
+        {
+            b = SimpleBlobDetector::create(*itBLOB);
+//            label = Legende(*itBLOB);
+            itBLOB++;
+        }
+        try
+        {
+            // We can detect keypoint with detect method
+            vector<KeyPoint>  keyImg;
+            vector<Rect>  zone;
+            vector<vector <Point> >  region;
+            Mat     desc, result(fore.rows, fore.cols, CV_8UC3);
+            if (b.dynamicCast<SimpleBlobDetector>() != NULL)
+            {
+                Ptr<SimpleBlobDetector> sbd = b.dynamicCast<SimpleBlobDetector>();
+                sbd->detect(fore, keyImg, Mat());
+                drawKeypoints(fore, keyImg, result);
+                int i = 0;
+                for (vector<KeyPoint>::iterator k = keyImg.begin(); k != keyImg.end(); k++, i++){
+                    //circle(result, k->pt, (int)k->size, palette[i % 65536]);
+                    RotatedRect rect = RotatedRect((Point2f)k->pt, Size2f(k->size, k->size), 0);
+                    
+                    Rect r0 = rect.boundingRect();
+                    
+                    if(r0.area() > 200 && r0.area() < 1200){
+                        checkWindowsOverlap(&trackedWindows, r0);
+                        trackedWindows.push_back(r0);
+                        rectangle(result, r0 , palette[i % 65536]);
+                    }
+                }
+            }
+            
+            return result;
+            
+//            namedWindow(*itDesc + label, WINDOW_AUTOSIZE);
+//            imshow(*itDesc + label, result);
+//            imshow("Original", img);
+//            waitKey();
+        }
+        catch (Exception& e)
+        {
+            cout << "Feature : " << *itDesc << "\n";
+            cout << e.msg << endl;
+        }
+    }
+    
+    return Mat();
+}
+
+//Getting BLOBS first version.
 Mat BlobDetector::getBLOBS(){
     
     trackedWindows = vector<Rect>();

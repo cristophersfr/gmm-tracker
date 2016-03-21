@@ -114,6 +114,7 @@ int main(int argc, char** argv) {
     
     Mat frame;
     
+    // Change this if not Unix.
     sem_unlink("frameSync");
     frameLock = sem_open("frameSync", O_CREAT, 0700, 1);
 
@@ -151,7 +152,7 @@ int main(int argc, char** argv) {
         
         //Get BLOBS.
         //Very expensive operation.
-        output = blobDetector.getBLOBS();
+        output = blobDetector.detectBLOBS();
         
         //Detect objects through intersection.
         objectsWindows = blobDetector.getMovingObjects();
