@@ -8,16 +8,16 @@
 
 #include "blob_detector.hpp"
 
-//Instant the Background Subtractor and its parameters.
+// Instantiate the Background Subtractor and its parameters.
 BlobDetector::BlobDetector(){
     bgsubtractor = createBackgroundSubtractorMOG2();
-    bgsubtractor->setHistory(12000);
-    bgsubtractor->setNMixtures(5);
+    bgsubtractor->setHistory(120);
+    bgsubtractor->setNMixtures(3);
     bgsubtractor->setDetectShadows(true);
     bgsubtractor->setShadowValue(127);
 }
 
-//Return the foreground mask.
+// Return the foreground mask.
 Mat BlobDetector::getFore(Mat frame){
     
     this->frame = frame;
@@ -155,6 +155,7 @@ Mat BlobDetector::detectBLOBS(){
     pBLOB.back().blobColor = 0;
     
     itBLOB = pBLOB.begin();
+    
     vector<double> desMethCmp;
     Ptr<Feature2D> b;
     String label;
@@ -198,10 +199,6 @@ Mat BlobDetector::detectBLOBS(){
             
             return result;
             
-//            namedWindow(*itDesc + label, WINDOW_AUTOSIZE);
-//            imshow(*itDesc + label, result);
-//            imshow("Original", img);
-//            waitKey();
         }
         catch (Exception& e)
         {
@@ -276,11 +273,11 @@ vector<Rect> BlobDetector::getMovingObjects(){
     vector<Rect> detectedWindows;
     
     //denmark4.avi ROI.
-    Rect detectionROI = Rect(240,100,5,120);
+    //Rect detectionROI = Rect(240,100,5,120);
     
     //denmark1.avi ROI.
     //Rect detectionROI = Rect(200,160,5,50);
-    //Rect detectionROI = Rect(260,200,50,5);
+    Rect detectionROI = Rect(260,300,50,5);
     
     //nevada1.avi ROI.
     //Rect detectionROI = Rect(200,160,60,120);

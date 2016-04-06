@@ -10,6 +10,7 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/videoio/videoio.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/objdetect.hpp>
 
 #include <iostream>
 #include <thread>
@@ -23,8 +24,10 @@
 using namespace std;
 using namespace cv;
 
+// Vector with each thread containing a tracker running.
 vector<thread> threads;
 
+// Vector with tracked windows at each frame.
 vector<Rect> resultsWindows;
 
 int num_results;
@@ -119,10 +122,11 @@ int main(int argc, char** argv) {
     frameLock = sem_open("frameSync", O_CREAT, 0700, 1);
 
     VideoCapture cap;
-    cap.open("/Users/cristopher/Workspace/gmm-tracker/gmm-tracker/videos/denmark4.avi");
+    cap.open("/Users/cristopher/Workspace/gmm-tracker/gmm-tracker/videos/denmark1.avi");
     
     Mat output;
     BlobDetector blobDetector;
+    CascadeClassifier classifier;
     vector<Rect> objectsWindows;
     bool init = false;
     
@@ -151,8 +155,7 @@ int main(int argc, char** argv) {
         Mat fore = blobDetector.getFore(frame);
         
         //Get BLOBS.
-        //Very expensive operation.
-        output = blobDetector.detectBLOBS();
+        blobDetector.detectBLOBS();
         
         //Detect objects through intersection.
         objectsWindows = blobDetector.getMovingObjects();
@@ -192,8 +195,11 @@ int main(int argc, char** argv) {
         putText(output, to_string(threads.size()), Point(10,35), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0,0,255),2,8);
         
         // Display images.
+        sem_wait(frameLock);
         imshow("Video Output", output);
-        imshow("Foreground", fore);
+        sem_post(frameLock);
+        
+        //imshow("Foreground", fore);
         
         int key = waitKey(1);
 
