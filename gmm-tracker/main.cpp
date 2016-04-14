@@ -6,23 +6,16 @@
 //  Copyright © 2016 Cristopher Freitas. All rights reserved.
 //
 
-#include <opencv2/opencv.hpp>
-#include <opencv2/imgcodecs.hpp>
-#include <opencv2/videoio/videoio.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/objdetect.hpp>
-
-#include <iostream>
 #include <thread>
 #include <stdio.h>
 #include <semaphore.h>
 #include <time.h>
 
 #include "blob_detector.hpp"
+#include "classifier.hpp"
 #include "kcftracker/kcftracker.hpp"
 
-using namespace std;
-using namespace cv;
+Classifier classifier;
 
 // Vector with each thread containing a tracker running.
 vector<thread> threads;
@@ -30,11 +23,13 @@ vector<thread> threads;
 // Vector with tracked windows at each frame.
 vector<Rect> resultsWindows;
 
+// Counting objects being tracked.
 int num_results;
 
+// General semaphore for avoiding frame being accessed while being changed.
 sem_t * frameLock;
 
-//Verifying if the objects is not being tracked already.
+// Verifying if the objects is not being tracked already.
 vector<Rect> checkTrackingWindows(vector <Rect> windows){
     vector<Rect> :: const_iterator itw = windows.begin();
     vector<Rect> :: const_iterator itr = resultsWindows.begin();
@@ -53,7 +48,7 @@ vector<Rect> checkTrackingWindows(vector <Rect> windows){
                 float ratio = intersection.area() / float(rect_area) ;
                 ratio = ratio * 100;
                 //cout << ratio << endl;
-                //Ratio of overlapping.
+                // Ratio of overlapping.
                 if(ratio < 10){
                     overlap_flag = false;
                 } else {
@@ -79,17 +74,17 @@ vector<Rect> checkTrackingWindows(vector <Rect> windows){
     return results;
 }
 
-//Thread function responsible for keep updating the tracker.
+// Thread function responsible for keep updating the tracker.
 void runTracker(KCFTracker * tracker, Mat * frame){
     Rect * result = new Rect();
     int i = num_results;
     num_results++;
     resultsWindows.push_back(*result);
-//    cout << resultsWindows.front() << endl;
     while(!frame->empty()){
         sem_wait(frameLock);
         *result = tracker->update(*frame);
         resultsWindows[i] = *result;
+        classifier.isBike(*frame, *result);
         rectangle( *frame, Point( result->x, result->y ),
                   Point( result->x+result->width, result->y+result->height),
                   Scalar( 0, 255, 255 ), 1, 8 );
@@ -97,7 +92,7 @@ void runTracker(KCFTracker * tracker, Mat * frame){
     }
 }
 
-//Starting tracking and creating the thread responsible.
+// Starting tracking and creating the thread responsible.
 void trackObjects(vector<Rect> objects, Mat * frame){
     vector<Rect> :: const_iterator itr = objects.begin();
     int i = 0;
@@ -122,11 +117,11 @@ int main(int argc, char** argv) {
     frameLock = sem_open("frameSync", O_CREAT, 0700, 1);
 
     VideoCapture cap;
+    
     cap.open("/Users/cristopher/Workspace/gmm-tracker/gmm-tracker/videos/denmark1.avi");
     
-    Mat output;
-    BlobDetector blobDetector;
-    CascadeClassifier classifier;
+    // BlobDetector(int history, int nMixtures, bool detectShadows)
+    BlobDetector blobDetector(3600, 3, true);
     vector<Rect> objectsWindows;
     bool init = false;
     
@@ -145,13 +140,15 @@ int main(int argc, char** argv) {
         
         //Synchronize frame capture.
         sem_wait(frameLock);
-        cap.read(frame);
+        for(int i=0; i < 4; i++)
+            cap.read(frame);
         sem_post(frameLock);
         
-        if (frame.empty())
+        if (frame.empty()){
+            cout << "Could not load frame." << endl;
             break;
+        }
         
-        //Get foreground.
         Mat fore = blobDetector.getFore(frame);
         
         //Get BLOBS.
@@ -161,7 +158,8 @@ int main(int argc, char** argv) {
         objectsWindows = blobDetector.getMovingObjects();
         
         //Drawing output.
-        output = blobDetector.drawTrackedWindows();
+        Mat output;
+        blobDetector.drawTrackedWindows();
         output = blobDetector.drawDetectedWindows(objectsWindows);
         
         //Call KCFTracker.
@@ -169,14 +167,12 @@ int main(int argc, char** argv) {
             //cout << objectsWindows.size();
             trackObjects(objectsWindows, &frame);
             init = true;
-        }
-        else if(init){
+        } else if(init){
             objectsWindows = checkTrackingWindows(objectsWindows);
             if(objectsWindows.size() > 0){
                 trackObjects(objectsWindows, &frame);
             }
         }
-        
         
         //Counting frames.
         num_frames++;
@@ -186,20 +182,18 @@ int main(int argc, char** argv) {
         
         // Time elapsed
         double seconds = difftime (end, start);
-        //cout << "Time taken : " << seconds << " seconds" << endl;
         
         // Calculate frames per second
         double fps  = num_frames / seconds;
         string text = "FPS: " + to_string(int(round(fps)));
-        putText(output, text, Point(10,15), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0,0,255),2,8);
-        putText(output, to_string(threads.size()), Point(10,35), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0,0,255),2,8);
+        putText(frame, text, Point(10,15), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0,0,255),2,8);
+        putText(frame, to_string(threads.size()), Point(10,35), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0,0,255),2,8);
         
         // Display images.
         sem_wait(frameLock);
         imshow("Video Output", output);
+        //imshow("Foreground",fore);
         sem_post(frameLock);
-        
-        //imshow("Foreground", fore);
         
         int key = waitKey(1);
 
@@ -207,6 +201,7 @@ int main(int argc, char** argv) {
         
     }
     
+    // Joining unfinished threads.
     for(int i = 0; i < threads.size(); i++){
         if(threads[i].joinable()){
             threads[i].join();
@@ -214,5 +209,7 @@ int main(int argc, char** argv) {
     }
     
     cap.release();
+    //outputVideo.release();
+    destroyAllWindows();
 
 }

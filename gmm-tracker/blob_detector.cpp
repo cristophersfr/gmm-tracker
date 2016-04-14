@@ -9,18 +9,18 @@
 #include "blob_detector.hpp"
 
 // Instantiate the Background Subtractor and its parameters.
-BlobDetector::BlobDetector(){
+BlobDetector::BlobDetector(int history, int nMixtures, bool detectShadows){
     bgsubtractor = createBackgroundSubtractorMOG2();
-    bgsubtractor->setHistory(120);
-    bgsubtractor->setNMixtures(3);
-    bgsubtractor->setDetectShadows(true);
+    bgsubtractor->setHistory(history);
+    bgsubtractor->setNMixtures(nMixtures);
+    bgsubtractor->setDetectShadows(detectShadows);
     bgsubtractor->setShadowValue(127);
 }
 
 // Return the foreground mask.
 Mat BlobDetector::getFore(Mat frame){
     
-    this->frame = frame;
+    frame.copyTo(this->frame);
     
     //Applying bg subtraction.
     bgsubtractor->apply(this->frame, fore);
@@ -161,13 +161,10 @@ Mat BlobDetector::detectBLOBS(){
     String label;
     // Descriptor loop
     vector<String>::iterator itDesc;
-    for (itDesc = typeDesc.begin(); itDesc != typeDesc.end(); itDesc++)
-    {
+    for (itDesc = typeDesc.begin(); itDesc != typeDesc.end(); itDesc++){
         vector<KeyPoint> keyImg1;
-        if (*itDesc == "BLOB")
-        {
+        if (*itDesc == "BLOB"){
             b = SimpleBlobDetector::create(*itBLOB);
-//            label = Legende(*itBLOB);
             itBLOB++;
         }
         try
@@ -189,7 +186,7 @@ Mat BlobDetector::detectBLOBS(){
                     
                     Rect r0 = rect.boundingRect();
                     
-                    if(r0.area() > 200 && r0.area() < 1200){
+                    if(r0.area() > 200 /* && r0.area() < 1200 */){
                         checkWindowsOverlap(&trackedWindows, r0);
                         trackedWindows.push_back(r0);
                         rectangle(result, r0 , palette[i % 65536]);
@@ -210,7 +207,7 @@ Mat BlobDetector::detectBLOBS(){
     return Mat();
 }
 
-//Getting BLOBS first version.
+// Getting BLOBS first version.
 Mat BlobDetector::getBLOBS(){
     
     trackedWindows = vector<Rect>();
@@ -276,8 +273,8 @@ vector<Rect> BlobDetector::getMovingObjects(){
     //Rect detectionROI = Rect(240,100,5,120);
     
     //denmark1.avi ROI.
-    //Rect detectionROI = Rect(200,160,5,50);
-    Rect detectionROI = Rect(260,300,50,5);
+    Rect detectionROI = Rect(200,160,5,50);
+    //Rect detectionROI = Rect(650,300,5,150);
     
     //nevada1.avi ROI.
     //Rect detectionROI = Rect(200,160,60,120);
@@ -307,32 +304,37 @@ vector<Rect> BlobDetector::getMovingObjects(){
 }
 
 
-//Drawing tracked windows.
+// Drawing tracked windows.
 Mat BlobDetector::drawTrackedWindows(){
+    Mat frameCopy;
+    frame.copyTo(frameCopy);
     vector<Rect> :: const_iterator itr = trackedWindows.begin();
     
     while(itr!=trackedWindows.end()){
-        rectangle(frame, *itr, Scalar(255, 0, 0));
+        rectangle(frameCopy, *itr, Scalar(255, 0, 0));
         Point2f center = Point2f((*itr).x + (*itr).width/2,  (*itr).y+ (*itr).height/2);
-        circle(frame, center, 1, Scalar(255, 0, 0), 2, 8, 0);
+        circle(frameCopy, center, 1, Scalar(255, 0, 0), 2, 8, 0);
         itr++;
     }
     
-    return frame;
+    return frameCopy;
 }
 
-//Drawing detected windows.
+// Drawing detected windows.
 Mat BlobDetector::drawDetectedWindows(vector<Rect> detectedWindows){
+    Mat frameCopy;
+    frame.copyTo(frameCopy);
+    
     vector<Rect> :: const_iterator itr = detectedWindows.begin();
     
     while(itr!=detectedWindows.end()){
-        rectangle(frame, *itr, Scalar(0, 0, 255));
+        rectangle(frameCopy, *itr, Scalar(0, 0, 255));
         Point2f center = Point2f((*itr).x + (*itr).width/2,  (*itr).y+ (*itr).height/2);
-        circle(frame, center, 1, Scalar(0, 0, 255), 2, 8, 0);
+        circle(frameCopy, center, 1, Scalar(0, 0, 255), 2, 8, 0);
         itr++;
     }
     
-    return frame;
+    return frameCopy;
 }
 
 

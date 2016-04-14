@@ -5,7 +5,7 @@
 //  Created by Cristopher Freitas on 2/18/16.
 //  Copyright © 2016 Cristopher Freitas. All rights reserved.
 //
-//  BlobDetector implements a background subtractor algorithm.
+//  BlobDetector implements a background subtraction algorithm.
 //
 
 #ifndef blob_detector_hpp
@@ -36,7 +36,7 @@ private:
     void checkWindowsOverlap(vector<Rect> * windows, Rect r0);
     
 public:
-    BlobDetector();
+    BlobDetector(int history, int nMixtures, bool detectShadows);
     Mat getFore(Mat frame);
     [[deprecated("Replaced by detectBLOBS, which has an improved implementation.")]]
     Mat getBLOBS();
