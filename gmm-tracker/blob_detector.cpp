@@ -21,6 +21,7 @@ BlobDetector::BlobDetector(int history, int nMixtures, bool detectShadows){
 Mat BlobDetector::getFore(Mat frame){
     
     frame.copyTo(this->frame);
+//    this->frame = frame;
     
     //Applying bg subtraction.
     bgsubtractor->apply(this->frame, fore);
@@ -186,7 +187,7 @@ Mat BlobDetector::detectBLOBS(){
                     
                     Rect r0 = rect.boundingRect();
                     
-                    if(r0.area() > 200 /* && r0.area() < 1200 */){
+                    if(r0.area() > 200  && r0.area() < 1500 ){
                         checkWindowsOverlap(&trackedWindows, r0);
                         trackedWindows.push_back(r0);
                         rectangle(result, r0 , palette[i % 65536]);
@@ -268,37 +269,54 @@ Mat BlobDetector::getBLOBS(){
 vector<Rect> BlobDetector::getMovingObjects(){
     
     vector<Rect> detectedWindows;
-    
-    //denmark4.avi ROI.
-    //Rect detectionROI = Rect(240,100,5,120);
+    vector<Rect> multipleROI;
     
     //denmark1.avi ROI.
-    Rect detectionROI = Rect(200,160,5,50);
-    //Rect detectionROI = Rect(650,300,5,150);
+    multipleROI.push_back(Rect(200,165,5,40));
+    multipleROI.push_back(Rect(260,300,50,5));
+//    multipleROI.push_back(Rect(380,130,50,5));
+    
+//    //innout.mp4
+//    multipleROI.push_back(Rect(200,165,5,40));
+//    multipleROI.push_back(Rect(600,165,5,40));
     
     //nevada1.avi ROI.
     //Rect detectionROI = Rect(200,160,60,120);
     
-    rectangle(frame, detectionROI, Scalar(0, 0, 255));
+    //denmark4.avi ROI.
+    //Rect firstROI = Rect(240,100,5,120);
     
-    vector<Rect> :: const_iterator itr = trackedWindows.begin();
-    
-    while(itr!=trackedWindows.end()){
-        Rect intersection = (detectionROI & *itr);
-        if(intersection.area() > 0){
-            float ratio = intersection.area() / float((*itr).area()) ;
-            ratio = ratio * 100;
-            
-            if(ratio > 10){
-                //bool result = checkBoxMoving(&detectedWindows, *itr);
-                //if(!result){
-                    detectedWindows.push_back(*itr);
-                //}
-            }
-        }
-        itr++;
+    // Draw multiple ROI
+    vector<Rect>::iterator itw = multipleROI.begin();
+    while(itw != multipleROI.end()){
+        rectangle(frame, *itw, Scalar(0, 0, 255));
+        itw++;
     }
     
+    itw = multipleROI.begin();
+    
+    vector<Rect> :: const_iterator itr = trackedWindows.begin();
+
+    while(itr!=trackedWindows.end()){
+        while(itw != multipleROI.end()){
+            Rect intersection = (*itw & *itr);
+            if(intersection.area() > 0){
+                float ratio = intersection.area() / float((*itr).area()) ;
+                ratio = ratio * 100;
+                
+                if(ratio > 10){
+                    //bool result = checkBoxMoving(&detectedWindows, *itr);
+                    //if(!result){
+                        detectedWindows.push_back(*itr);
+                    //}
+                }
+            }
+            itw++;
+        }
+        itw = multipleROI.begin();
+        itr++;
+    }
+
     
     return detectedWindows;
 }
@@ -306,35 +324,30 @@ vector<Rect> BlobDetector::getMovingObjects(){
 
 // Drawing tracked windows.
 Mat BlobDetector::drawTrackedWindows(){
-    Mat frameCopy;
-    frame.copyTo(frameCopy);
     vector<Rect> :: const_iterator itr = trackedWindows.begin();
     
     while(itr!=trackedWindows.end()){
-        rectangle(frameCopy, *itr, Scalar(255, 0, 0));
+        rectangle(frame, *itr, Scalar(255, 0, 0));
         Point2f center = Point2f((*itr).x + (*itr).width/2,  (*itr).y+ (*itr).height/2);
-        circle(frameCopy, center, 1, Scalar(255, 0, 0), 2, 8, 0);
+        circle(frame, center, 1, Scalar(255, 0, 0), 2, 8, 0);
         itr++;
     }
     
-    return frameCopy;
+    return frame;
 }
 
 // Drawing detected windows.
 Mat BlobDetector::drawDetectedWindows(vector<Rect> detectedWindows){
-    Mat frameCopy;
-    frame.copyTo(frameCopy);
-    
     vector<Rect> :: const_iterator itr = detectedWindows.begin();
     
     while(itr!=detectedWindows.end()){
-        rectangle(frameCopy, *itr, Scalar(0, 0, 255));
+        rectangle(frame, *itr, Scalar(0, 0, 255));
         Point2f center = Point2f((*itr).x + (*itr).width/2,  (*itr).y+ (*itr).height/2);
-        circle(frameCopy, center, 1, Scalar(0, 0, 255), 2, 8, 0);
+        circle(frame, center, 1, Scalar(0, 0, 255), 2, 8, 0);
         itr++;
     }
     
-    return frameCopy;
+    return frame;
 }
 
 

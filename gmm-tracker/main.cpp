@@ -15,7 +15,7 @@
 #include "classifier.hpp"
 #include "kcftracker/kcftracker.hpp"
 
-Classifier classifier;
+//Classifier classifier;
 
 // Vector with each thread containing a tracker running.
 vector<thread> threads;
@@ -84,7 +84,7 @@ void runTracker(KCFTracker * tracker, Mat * frame){
         sem_wait(frameLock);
         *result = tracker->update(*frame);
         resultsWindows[i] = *result;
-        classifier.isBike(*frame, *result);
+        //classifier.isBike(*frame, *result);
         rectangle( *frame, Point( result->x, result->y ),
                   Point( result->x+result->width, result->y+result->height),
                   Scalar( 0, 255, 255 ), 1, 8 );
@@ -117,15 +117,21 @@ int main(int argc, char** argv) {
     frameLock = sem_open("frameSync", O_CREAT, 0700, 1);
 
     VideoCapture cap;
-    
     cap.open("/Users/cristopher/Workspace/gmm-tracker/gmm-tracker/videos/denmark1.avi");
     
+    int ex = static_cast<int>(cap.get(CV_CAP_PROP_FOURCC));
+    
+    Size S = Size((int) cap.get(CV_CAP_PROP_FRAME_WIDTH)*2,
+                  (int) cap.get(CV_CAP_PROP_FRAME_HEIGHT));
+    
+    VideoWriter outputVideo;
+    outputVideo.open("/Users/cristopher/Workspace/gmm-tracker/gmm-tracker/samples/denmark1-dual.avi",
+                     ex, cap.get(CV_CAP_PROP_FPS), S, true);
+    
     // BlobDetector(int history, int nMixtures, bool detectShadows)
-    BlobDetector blobDetector(3600, 3, true);
+    BlobDetector blobDetector(120, 3, true);
     vector<Rect> objectsWindows;
     bool init = false;
-    
-    namedWindow("Video Output");
     
     int num_frames = 0;
     num_results = 0;
@@ -140,8 +146,13 @@ int main(int argc, char** argv) {
         
         //Synchronize frame capture.
         sem_wait(frameLock);
-        for(int i=0; i < 4; i++)
-            cap.read(frame);
+//        for(int i=0; i < 2; i++){
+            if(!cap.read(frame)){
+                cout << "Could not load the frame." << endl;
+                return -1;
+            }
+//            resize(frame, frame, Size(), 0.5, 0.5);
+//        }
         sem_post(frameLock);
         
         if (frame.empty()){
@@ -151,13 +162,13 @@ int main(int argc, char** argv) {
         
         Mat fore = blobDetector.getFore(frame);
         
-        //Get BLOBS.
+        // Get BLOBS.
         blobDetector.detectBLOBS();
         
-        //Detect objects through intersection.
+        // Detect objects through intersection.
         objectsWindows = blobDetector.getMovingObjects();
         
-        //Drawing output.
+        // Drawing output.
         Mat output;
         blobDetector.drawTrackedWindows();
         output = blobDetector.drawDetectedWindows(objectsWindows);
@@ -174,7 +185,7 @@ int main(int argc, char** argv) {
             }
         }
         
-        //Counting frames.
+        // Counting frames.
         num_frames++;
         
         // End Time
@@ -186,12 +197,21 @@ int main(int argc, char** argv) {
         // Calculate frames per second
         double fps  = num_frames / seconds;
         string text = "FPS: " + to_string(int(round(fps)));
-        putText(frame, text, Point(10,15), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0,0,255),2,8);
-        putText(frame, to_string(threads.size()), Point(10,35), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0,0,255),2,8);
+        string title_1 = "Motion Detection";
+        string title_2 = "Object Tracking";
+        putText(output, title_1, Point(10,15), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0,0,0),2,8);
+        putText(frame, title_2, Point(10,15), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0,0,0),2,8);
+        putText(frame, text, Point(10,35), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0,0,255),2,8);
+        putText(frame, to_string(threads.size()), Point(10,55), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0,0,255),2,8);
         
         // Display images.
         sem_wait(frameLock);
-        imshow("Video Output", output);
+//        imshow("Tracker Output", output);
+//        imshow("Detection Output", frame);
+        Mat video_output;
+        hconcat(output, frame, video_output);
+        imshow("Video Output", video_output);
+        outputVideo.write(video_output);
         //imshow("Foreground",fore);
         sem_post(frameLock);
         
@@ -209,7 +229,6 @@ int main(int argc, char** argv) {
     }
     
     cap.release();
-    //outputVideo.release();
-    destroyAllWindows();
+//    outputVideo.release();
 
 }
