@@ -46,6 +46,9 @@ class Classifier {
     // Vector with objects detected.
     vector<Rect> objects;
     
+    // Samples image counter
+    int n_images;
+    
 public:
     Classifier();
     bool isBike(Mat, Rect object);

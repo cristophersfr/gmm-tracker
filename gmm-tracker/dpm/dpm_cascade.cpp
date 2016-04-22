@@ -221,11 +221,13 @@ void DPMCascade::computeRootPCAScores(vector< vector< Mat > > &rootScores)
     {
         rootScores[comp].resize(nlevels);
 #ifdef HAVE_TBB // parallel computing
+//        cout << "Using TBB" << endl;
         ParalComputeRootPCAScores paralTask(pcaPyramid, model.rootPCAFilters[comp],
                 model.pcaDim, rootScores[comp]);
         parallel_for_(Range(interval, nlevels), paralTask);
 #else
 #ifdef _OPENMP
+//        cout << "Using OpenMP" << endl;
 #pragma omp parallel for
 #endif
         for (int level = interval; level < nlevels; level++)

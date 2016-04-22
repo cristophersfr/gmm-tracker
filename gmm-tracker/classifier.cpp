@@ -17,6 +17,8 @@ Classifier::Classifier(){
     bicycleClassifier = \
     DPMDetector::create(vector<string>(1, "/Users/cristopher/Workspace/gmm-tracker/gmm-tracker/dpm-models/bicycles.xml"));
     
+    n_images = 0;
+    
 //    carClassifier = \
 //    DPMDetector::create(vector<string>(1, "/Users/cristopher/Workspace/ \
 //                                       gmm-tracker/gmm-tracker/dpm-models/car.xml"));
@@ -50,7 +52,7 @@ bool Classifier::isBike(Mat frame, Rect object){
         while(itr != ds.end()){
             DPMDetector::ObjectDetection detectedObject = *itr;
             Rect detectedRect = detectedObject.rect;
-            detectedRect -= (detectedRect.size()*8)/10;
+            //detectedRect -= (detectedRect.size()*8)/10;
             
             //float ratio = (float)detectedObject.rect.area() / objectBox.area();
             //if(ratio < 1.5 && ratio > 0.7){
@@ -59,8 +61,11 @@ bool Classifier::isBike(Mat frame, Rect object){
             //       not according to the real image,
             //       we have to downscale the rectangle after identifying,
             //       and changing its coordinates. 
-                rectangle(frame, detectedRect, Scalar(0,255,255));
-                cout << detectedObject.score << endl;
+            rectangle(frameROI, detectedRect, Scalar(0,255,255));
+            String imageName = "sample_" + to_string(n_images) + ".jpg";
+            n_images++;
+            imwrite(imageName, frameROI);
+            cout << detectedObject.score << endl;
             //}
             
             itr++;
