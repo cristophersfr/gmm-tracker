@@ -11,11 +11,16 @@
 #include <semaphore.h>
 #include <time.h>
 
+#ifdef __linux__ 
+    #include <fcntl.h>
+#endif
+
+
 #include "blob_detector.hpp"
 #include "classifier.hpp"
 #include "kcftracker/kcftracker.hpp"
 
-Classifier classifier;
+//Classifier classifier;
 
 // Vector with each thread containing a tracker running.
 vector<thread> threads;
@@ -84,7 +89,7 @@ void runTracker(KCFTracker * tracker, Mat * frame){
         sem_wait(frameLock);
         *result = tracker->update(*frame);
         resultsWindows[i] = *result;
-        classifier.isBike(*frame, *result);
+        //classifier.isBike(*frame, *result);
         rectangle( *frame, Point( result->x, result->y ),
                   Point( result->x+result->width, result->y+result->height),
                   Scalar( 0, 255, 255 ), 1, 8 );
@@ -121,7 +126,7 @@ int main(int argc, char** argv) {
     frameLock = sem_open("frameSync", O_CREAT, 0700, 1);
 
     VideoCapture cap;
-    cap.open("/Users/cristopher/Workspace/gmm-tracker/gmm-tracker/videos/denmark1.avi");
+    cap.open("/home/cristopher/workspace/gmm-tracker/gmm-tracker/videos/denmark1.avi");
     
 //    int ex = static_cast<int>(cap.get(CV_CAP_PROP_FOURCC));
 //    

@@ -43,8 +43,7 @@ Mat BlobDetector::getFore(Mat frame){
 
 //Check if box is moving.
 bool BlobDetector::checkBoxMoving(vector<Rect> * windows, Rect r0){
-    vector<Rect> :: const_iterator itr = windows->begin();
-    vector<Point2f> points;
+    vector<Rect> :: iterator itr = windows->begin();
     
     while(itr!=windows->end()){
         Rect intersection = (r0 & *itr);
@@ -64,7 +63,7 @@ bool BlobDetector::checkBoxMoving(vector<Rect> * windows, Rect r0){
 //Check if some window overlap.
 void BlobDetector::checkWindowsOverlap(vector<Rect> * windows, Rect r0){
     
-    vector<Rect> :: const_iterator itr = windows->begin();
+    vector<Rect> :: iterator itr = windows->begin();
     
     while(itr!=windows->end()){
         Rect intersection = (r0 & *itr);
@@ -239,7 +238,7 @@ Mat BlobDetector::getBLOBS(){
     //cout << nLabels << endl;
     
     //Drawing bounding boxes around components.
-    vector<Point3f> :: const_iterator itl = points.begin();
+    vector<Point3f> :: iterator itl = points.begin();
     vector<Point2f> rect_points;
     
     for(int label = 1; label < nLabels; ++label){
@@ -295,7 +294,7 @@ vector<Rect> BlobDetector::getMovingObjects(){
     
     itw = multipleROI.begin();
     
-    vector<Rect> :: const_iterator itr = trackedWindows.begin();
+    vector<Rect> :: iterator itr = trackedWindows.begin();
 
     while(itr!=trackedWindows.end()){
         while(itw != multipleROI.end()){
@@ -324,7 +323,7 @@ vector<Rect> BlobDetector::getMovingObjects(){
 
 // Drawing tracked windows.
 Mat BlobDetector::drawTrackedWindows(){
-    vector<Rect> :: const_iterator itr = trackedWindows.begin();
+    vector<Rect> :: iterator itr = trackedWindows.begin();
     
     while(itr!=trackedWindows.end()){
         rectangle(frame, *itr, Scalar(255, 0, 0));
@@ -338,7 +337,7 @@ Mat BlobDetector::drawTrackedWindows(){
 
 // Drawing detected windows.
 Mat BlobDetector::drawDetectedWindows(vector<Rect> detectedWindows){
-    vector<Rect> :: const_iterator itr = detectedWindows.begin();
+    vector<Rect> :: iterator itr = detectedWindows.begin();
     
     while(itr!=detectedWindows.end()){
         rectangle(frame, *itr, Scalar(0, 0, 255));
