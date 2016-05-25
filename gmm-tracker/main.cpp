@@ -15,12 +15,15 @@
     #include <fcntl.h>
 #endif
 
-
 #include "blob_detector.hpp"
 #include "classifier.hpp"
 #include "kcftracker/kcftracker.hpp"
 
 Classifier classifier;
+
+#define HAVE_TBB TRUE
+
+//Classifier classifier;
 
 // Vector with each thread containing a tracker running.
 vector<thread> threads;
@@ -81,12 +84,15 @@ vector<Rect> checkTrackingWindows(vector <Rect> windows){
 
 // Thread function responsible for keep updating the tracker.
 void runTracker(KCFTracker * tracker, Mat * frame){
+    cout << "Calling new Thread" << endl;
     Rect * result = new Rect();
     int i = num_results;
     num_results++;
     resultsWindows.push_back(*result);
     while(!frame->empty()){
+	cout << "Locking thread" << endl;
         sem_wait(frameLock);
+	cout << "Releasing thread" << endl;
         *result = tracker->update(*frame);
         resultsWindows[i] = *result;
         classifier.isPedestrian(*frame, *result);
@@ -127,7 +133,8 @@ int main(int argc, char** argv) {
 
     VideoCapture cap;
 //    cap.open("/home/cristopher/workspace/gmm-tracker/gmm-tracker/videos/denmark1.avi");
-    cap.open("/Users/cristopher/Workspace/gmm-tracker/gmm-tracker/videos/denmark1.avi");
+//    cap.open("/Users/cristopher/Workspace/gmm-tracker/gmm-tracker/videos/denmark1.avi");
+    cap.open("/home/cristopher/Workspace/gmm-tracker/gmm-tracker/videos/denmark1.avi");
     
 //    int ex = static_cast<int>(cap.get(CV_CAP_PROP_FOURCC));
 //    
