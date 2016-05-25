@@ -20,7 +20,7 @@
 #include "classifier.hpp"
 #include "kcftracker/kcftracker.hpp"
 
-//Classifier classifier;
+Classifier classifier;
 
 // Vector with each thread containing a tracker running.
 vector<thread> threads;
@@ -89,7 +89,7 @@ void runTracker(KCFTracker * tracker, Mat * frame){
         sem_wait(frameLock);
         *result = tracker->update(*frame);
         resultsWindows[i] = *result;
-        //classifier.isBike(*frame, *result);
+        classifier.isPedestrian(*frame, *result);
         rectangle( *frame, Point( result->x, result->y ),
                   Point( result->x+result->width, result->y+result->height),
                   Scalar( 0, 255, 255 ), 1, 8 );
@@ -126,7 +126,8 @@ int main(int argc, char** argv) {
     frameLock = sem_open("frameSync", O_CREAT, 0700, 1);
 
     VideoCapture cap;
-    cap.open("/home/cristopher/workspace/gmm-tracker/gmm-tracker/videos/denmark1.avi");
+//    cap.open("/home/cristopher/workspace/gmm-tracker/gmm-tracker/videos/denmark1.avi");
+    cap.open("/Users/cristopher/Workspace/gmm-tracker/gmm-tracker/videos/denmark1.avi");
     
 //    int ex = static_cast<int>(cap.get(CV_CAP_PROP_FOURCC));
 //    
@@ -138,7 +139,7 @@ int main(int argc, char** argv) {
 //                     ex, cap.get(CV_CAP_PROP_FPS), S, true);
     
     // BlobDetector(int history, int nMixtures, bool detectShadows)
-    BlobDetector blobDetector(120, 3, true);
+    BlobDetector blobDetector(120, 3, false);
     vector<Rect> objectsWindows;
     bool init = false;
     

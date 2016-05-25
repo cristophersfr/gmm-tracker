@@ -34,14 +34,11 @@ class Classifier {
     // Video frame
     Mat frame;
     
-    // Pedestrian cascade classifier
-    cv::Ptr<DPMDetector> pedestrianClassifier;
+    // Haar Cascade
+    CascadeClassifier fullbody;
     
-    // Bicycles cascade classifier
+    // DPM Bicycles cascade classifier
     cv::Ptr<DPMDetector> bicycleClassifier;
-    
-    // Car cascade classifier
-    cv::Ptr<DPMDetector> carClassifier;
     
     // Vector with objects detected.
     vector<Rect> objects;
