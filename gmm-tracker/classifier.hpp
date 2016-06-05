@@ -31,27 +31,36 @@ using namespace std;
 using namespace cv::dpm;
 
 class Classifier {
+private:
+    int id;
     // Video frame
     Mat frame;
-    
-    // Haar Cascade
-    CascadeClassifier fullbody;
-    
+    // Object bounding box
+    Rect object;
+    // HOG Descriptor
+    HOGDescriptor pedestrian;
     // DPM Bicycles cascade classifier
     cv::Ptr<DPMDetector> bicycleClassifier;
-    
     // Vector with objects detected.
-    vector<Rect> objects;
-    
+    vector<Rect> detectedObjects;
     // Samples image counter
-    int n_images;
+    int n_samples;
+    // Counting how many frames used.
+    int n_frames;
+    // Total amount of score
+    float total_ratio;
+    bool isClassified;
+    bool result;
+    
+    Rect createROI(Rect object);
+    Rect adjustBox(Rect objectROI, Mat frameROI);
+    Rect readjustBox(Rect object, Rect objectROI);
     
 public:
-    Classifier();
-    bool isBike(Mat, Rect object);
-    bool isCar(Mat, Rect object);
-    bool isPedestrian(Mat, Rect object);
-    
+    Classifier(int id, Mat frame, Rect object);
+    void update(Mat frame);
+    bool detectBicycles();
+    bool detectPedestrians();
 };
 
 #endif /* classifier_hpp */
