@@ -19,6 +19,7 @@
 		F969504C1CB9D685009D1287 /* dpm_nms.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F96950431CB9D685009D1287 /* dpm_nms.cpp */; };
 		F969504D1CB9D685009D1287 /* precomp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F96950451CB9D685009D1287 /* precomp.cpp */; };
 		F96950501CB9F32C009D1287 /* classifier.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F969504E1CB9F32C009D1287 /* classifier.cpp */; };
+		F96F47341D061EEB008032EF /* object.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F96F47321D061EEB008032EF /* object.cpp */; };
 		F9AD58891C76C2BB00F0E845 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F9AD58881C76C2BB00F0E845 /* main.cpp */; };
 		F9AD58911C76C5FA00F0E845 /* blob_detector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F9AD588F1C76C5FA00F0E845 /* blob_detector.cpp */; };
 		F9E61F321C7A9BC700477AEE /* fhog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F9E61F2A1C7A9BC700477AEE /* fhog.cpp */; };
@@ -58,6 +59,8 @@
 		F969504E1CB9F32C009D1287 /* classifier.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = classifier.cpp; sourceTree = "<group>"; };
 		F969504F1CB9F32C009D1287 /* classifier.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = classifier.hpp; sourceTree = "<group>"; };
 		F96950511CBA1FDF009D1287 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../../../../usr/local/Cellar/opencv3/3.1.0/README.md; sourceTree = "<group>"; };
+		F96F47321D061EEB008032EF /* object.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = object.cpp; path = ../object.cpp; sourceTree = "<group>"; };
+		F96F47331D061EEB008032EF /* object.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = object.hpp; path = ../object.hpp; sourceTree = "<group>"; };
 		F9AD58851C76C2BB00F0E845 /* gmm-tracker */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "gmm-tracker"; sourceTree = BUILT_PRODUCTS_DIR; };
 		F9AD58881C76C2BB00F0E845 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		F9AD588F1C76C5FA00F0E845 /* blob_detector.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = blob_detector.cpp; sourceTree = "<group>"; };
@@ -148,6 +151,8 @@
 				F969504F1CB9F32C009D1287 /* classifier.hpp */,
 				F9AD588F1C76C5FA00F0E845 /* blob_detector.cpp */,
 				F9AD58901C76C5FA00F0E845 /* blob_detector.hpp */,
+				F96F47321D061EEB008032EF /* object.cpp */,
+				F96F47331D061EEB008032EF /* object.hpp */,
 			);
 			path = "gmm-tracker";
 			sourceTree = "<group>";
@@ -225,6 +230,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F969504C1CB9D685009D1287 /* dpm_nms.cpp in Sources */,
+				F96F47341D061EEB008032EF /* object.cpp in Sources */,
 				F9AD58911C76C5FA00F0E845 /* blob_detector.cpp in Sources */,
 				F96950471CB9D685009D1287 /* dpm_cascade_detector.cpp in Sources */,
 				F9AD58891C76C2BB00F0E845 /* main.cpp in Sources */,

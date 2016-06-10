@@ -44,7 +44,7 @@ private:
     // Vector with objects detected.
     vector<Rect> detectedObjects;
     // Samples image counter
-    int n_samples;
+    int hits;
     // Counting how many frames used.
     int n_frames;
     // Total amount of score
@@ -57,10 +57,13 @@ private:
     Rect readjustBox(Rect object, Rect objectROI);
     
 public:
-    Classifier(int id, Mat frame, Rect object);
-    void update(Mat frame);
+    Classifier();
+    void update(Mat frame, Rect object);
     bool detectBicycles();
     bool detectPedestrians();
+    Rect getObject();
+    int getId();
+
 };
 
 #endif /* classifier_hpp */
