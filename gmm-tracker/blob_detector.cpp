@@ -131,7 +131,7 @@ Mat BlobDetector::detectBLOBS(){
     pBLOB.push_back(pDefaultBLOB);
     pBLOB.back().filterByArea = true;
     pBLOB.back().minArea = 500;
-    pBLOB.back().maxArea = 2900;
+    pBLOB.back().maxArea = 5000;
     // Param for third BLOB detector we want only circular object
     typeDesc.push_back("BLOB");
     pBLOB.push_back(pDefaultBLOB);
@@ -186,7 +186,7 @@ Mat BlobDetector::detectBLOBS(){
                     
                     Rect r0 = rect.boundingRect();
                     
-                    if(r0.area() > 200  && r0.area() < 1500 ){
+                    if(r0.area() > 200  && r0.area() < 3000 ){
                         checkWindowsOverlap(&trackedWindows, r0);
                         trackedWindows.push_back(r0);
                         rectangle(result, r0 , palette[i % 65536]);
@@ -271,12 +271,15 @@ vector<Rect> BlobDetector::getMovingObjects(){
     vector<Rect> multipleROI;
     
     //denmark1.avi ROI.
-    multipleROI.push_back(Rect(200,165,5,40));
-    multipleROI.push_back(Rect(260,300,50,5));
+    multipleROI.push_back(Rect(40,180,5,40));
+    multipleROI.push_back(Rect(160,165,5,40));
+    multipleROI.push_back(Rect(320,165,5,40));
+    //multipleROI.push_back(Rect(260,300,50,5));
 //    multipleROI.push_back(Rect(380,130,50,5));
     
 //    innout.mp4
 //    multipleROI.push_back(Rect(200,165,5,40));
+//    multipleROI.push_back(Rect(420,165,5,40));
 //    multipleROI.push_back(Rect(600,165,5,40));
     
     //nevada1.avi ROI.

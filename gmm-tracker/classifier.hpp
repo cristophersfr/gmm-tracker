@@ -37,20 +37,19 @@ private:
     Mat frame;
     // Object bounding box
     Rect object;
+    // Detected object which can be used to recover the path.
+    Rect lastDetected;
     // HOG Descriptor
     HOGDescriptor pedestrian;
     // DPM Bicycles cascade classifier
     cv::Ptr<DPMDetector> bicycleClassifier;
-    // Vector with objects detected.
-    vector<Rect> detectedObjects;
     // Samples image counter
-    int hits;
+    int bicycle_hits;
+    int pedestrian_hits;
     // Counting how many frames used.
     int n_frames;
-    // Total amount of score
-    float total_ratio;
+
     bool isClassified;
-    bool result;
     
     Rect createROI(Rect object);
     Rect adjustBox(Rect objectROI, Mat frameROI);
@@ -59,10 +58,10 @@ private:
 public:
     Classifier();
     void update(Mat frame, Rect object);
-    bool detectBicycles();
-    bool detectPedestrians();
-    Rect getObject();
+    int detectBicycles();
+    int detectPedestrians();
     int getId();
+    Rect getObject();
 
 };
 
