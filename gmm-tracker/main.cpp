@@ -20,10 +20,6 @@
 #include "classifier.hpp"
 #include "kcftracker/kcftracker.hpp"
 
-//#define HAVE_TBB TRUE
-
-ofstream dataOutput;
-
 // Vector with each thread containing a tracker running.
 vector<thread> trackerThreads;
 
@@ -82,7 +78,6 @@ vector<Rect> checkTrackingWindows(vector <Rect> windows){
         itw++;
         itr = resultsWindows.begin();
     }
-    
     return results;
 }
 
@@ -130,25 +125,19 @@ void runClassifier(Packet * p){
             p->description = "pedestrian";
         } else if(classifier->detectBicycles() < 0 &&
                   classifier->detectPedestrians() < 0){
-            //*p->box = classifier->getObject();
-            //if(p->box->area() > 0){
-            //    p->flag = true;
-            //} else {
                 p->destroy = true;
                 cout << "Exiting thread" << endl;
                 sem_post(p->sync_signal);
                 pthread_exit(0);
-            //}
         }
         // Release tracker to continue its job.
         sem_post(p->sync_signal);
         
     }
-    
     pthread_exit(0);
 }
 
-// Thread function responsible for keep updating the tracker.
+// Thread function responsible to keep updating the tracker.
 void runTracker(KCFTracker * tracker, Mat * frame){
     vector<Point2f> path;
     // General semaphore for synchronizing threads.
@@ -170,7 +159,7 @@ void runTracker(KCFTracker * tracker, Mat * frame){
     p->flag = (bool *) false;
     p->destroy = (bool *) false;
     
-    thread t(runClassifier, p);
+    //thread t(runClassifier, p);
     
     while(!frame->empty()){
         sem_wait(frameLock);
@@ -210,8 +199,6 @@ void trackObjects(vector<Rect> objects, Mat * frame){
         Point2f center = Point2f((*itr).x + (*itr).width/2,  (*itr).y+ (*itr).height/2);
         string line = to_string(id) + ";" + "undef;" + to_string(num_frames) + ";" + to_string(center.x) + ";" + to_string(center.y);
         id++;
-        dataOutput << line << endl;
-        dataOutput.flush();
         tracker->init(*itr, *frame);
         // WARNING: The tracker can happen to get this "resource" first than the frame capture.
         trackerThreads.push_back(thread (runTracker, tracker, frame));
@@ -227,14 +214,9 @@ int main(int argc, char** argv) {
 #endif
     
     Mat frame;
-    id = 0;
     
-    // Opening file for saving data.
-    dataOutput.open("data.csv");
-    dataOutput << "sep=;" << endl;
-    string header = "id;label;timestamp;x;y";
-    dataOutput << header << endl;
-    dataOutput.flush();
+    // Initializing the object id counter.
+    id = 0;
     
     // Initializing semaphore for frame sync.
     sem_unlink("frameSync");
@@ -242,18 +224,7 @@ int main(int argc, char** argv) {
     
     // Opening video file
     VideoCapture cap;
-    cap.open("/Users/cristopher/Workspace/gmm-tracker/gmm-tracker/videos/denmark1.avi");
-    
-    // Writing video file.
-    int ex = static_cast<int>(cap.get(CV_CAP_PROP_FOURCC));
-
-    Size S = Size((int) cap.get(CV_CAP_PROP_FRAME_WIDTH)*2,
-                  (int) cap.get(CV_CAP_PROP_FRAME_HEIGHT));
-
-    VideoWriter outputVideo;
-    outputVideo.open("/Users/cristopher/Workspace/gmm-tracker/gmm-tracker/samples/output.avi",
-                     ex, cap.get(CV_CAP_PROP_FPS)/3, S, true);
-    
+    cap.open(argv[1]);
     
     // BlobDetector(int history, int nMixtures, bool detectShadows)
     BlobDetector blobDetector(120, 3, false);
@@ -273,13 +244,13 @@ int main(int argc, char** argv) {
         
         //Synchronize frame capture.
         sem_wait(frameLock);
-        for(int i=0; i < 2; i++){
+        //for(int i=0; i < 2; i++){
             if(!cap.read(frame)){
                 cout << "Could not load the frame." << endl;
                 break;
             }
-            resize(frame, frame, Size(), 0.5, 0.5);
-        }
+            //resize(frame, frame, Size(), 0.5, 0.5);
+        //}
     
         for(int i = 0; i < trackerThreads.size(); i++){
             sem_post(frameLock);
@@ -337,7 +308,6 @@ int main(int argc, char** argv) {
         Mat video_output;
         hconcat(output, frame, video_output);
         imshow("Video Output", video_output);
-        outputVideo.write(video_output);
         sem_post(frameLock);
         
         int key = waitKey(1);
@@ -354,7 +324,4 @@ int main(int argc, char** argv) {
     }
     
     cap.release();
-    outputVideo.release();
-    dataOutput.close();
-    
 }

@@ -271,11 +271,11 @@ vector<Rect> BlobDetector::getMovingObjects(){
     vector<Rect> multipleROI;
     
     //denmark1.avi ROI.
-    multipleROI.push_back(Rect(40,180,5,40));
-    multipleROI.push_back(Rect(160,165,5,40));
-    multipleROI.push_back(Rect(320,165,5,40));
-    //multipleROI.push_back(Rect(260,300,50,5));
-//    multipleROI.push_back(Rect(380,130,50,5));
+//    multipleROI.push_back(Rect(40,180,5,40));
+//    multipleROI.push_back(Rect(160,165,5,40));
+//    multipleROI.push_back(Rect(320,165,5,40));
+    multipleROI.push_back(Rect(260,300,50,5));
+    //multipleROI.push_back(Rect(380,130,50,5));
     
 //    innout.mp4
 //    multipleROI.push_back(Rect(200,165,5,40));
